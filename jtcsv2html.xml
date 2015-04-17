@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5" type="plugin" group="search" method="upgrade">
+	<name>PLG_SEARCH_JTCSV2HTML</name>
+	<author>Guido De Gobbis</author>
+	<creationDate>2014</creationDate>
+	<version>2.5</version>
+	<copyright>(C) JoomTools.de. All rights reserved.</copyright>
+	<license>GNU General Public License version 3 or later.</license>
+	<authorEmail>guido.de.gobbis@joomtools.de</authorEmail>
+	<description>PLG_SEARCH_JTCSV2HTML_XML_DESCRIPTION</description>
+	
+	<files>
+		<filename plugin="jtcsv2html">jtcsv2html.php</filename>
+		<folder>language</folder>
+	</files>
+
+	<config>
+		<fields name="params">
+
+			<fieldset name="basic">
+				<field name="search_limit" type="text"
+					default="50"
+					description="PLG_SEARCH_JTCSV2HTML_FIELD_SEARCHLIMIT_DESC"
+					label="PLG_SEARCH_JTCSV2HTML_FIELD_SEARCHLIMIT_LABEL"
+					size="5"
+				/>
+
+				<field name="search_content" type="radio"
+					class="btn-group btn-group-yesno"
+					default="1"
+					description="PLG_SEARCH_JTCSV2HTML_FIELD_CONTENT_DESC"
+					label="PLG_SEARCH_JTCSV2HTML_FIELD_CONTENT_LABEL"
+				>
+					<option value="1">JON</option>
+					<option value="0">JOFF</option>
+				</field>
+
+				<field name="search_archived" type="radio"
+					class="btn-group btn-group-yesno"
+					default="0"
+					description="PLG_SEARCH_JTCSV2HTML_FIELD_ARCHIVED_DESC"
+					label="PLG_SEARCH_JTCSV2HTML_FIELD_ARCHIVED_LABEL"
+				>
+					<option value="1">JON</option>
+					<option value="0">JOFF</option>
+				</field>
+				<field name="debug"
+				       type="radio"
+				       class="btn-group btn-group-yesno"
+				       default="0"
+				       label="PLG_SEARCH_JTCSV2HTML_FIELD_DEBUG"
+				       description="PLG_SEARCH_JTCSV2HTML_FIELD_DEBUG_DESC">
+					<option value="1">JON</option>
+					<option value="0">JOFF</option>
+				</field>
+			</fieldset>
+
+		</fields>
+	</config>
+</extension>
