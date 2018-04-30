@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension version="3" type="plugin" group="search" method="upgrade">
 	<name>PLG_SEARCH_JTCSV2HTML</name>
-	<creationDate>2017-01-22</creationDate>
+	<creationDate>##DATE##</creationDate>
 	<author>Guido De Gobbis</author>
 	<authorEmail>support@joomtools.de</authorEmail>
 	<authorUrl>www.joomtools.de</authorUrl>
-	<copyright>Copyright (C) 2016 JoomTools.de. All rights reserved.</copyright>
+	<copyright>Copyright (C) ##YEAR## JoomTools.de. All rights reserved.</copyright>
 	<license>GPL v3</license>
-	<version>3.0.0</version>
+	<version>##VERSION##</version>
 	<description>PLG_SEARCH_JTCSV2HTML_XML_DESCRIPTION</description>
-	
+
 	<files>
-		<filename plugin="jtcsv2html">jtcsv2html.php</filename>
-<!--		<folder>language</folder> -->
+		##FILES##
 	</files>
+
+	<languages folder="language">
+		##LANGUAGE_FILES##
+	</languages>
 
 	<scriptfile>jtcsv2html.scriptfile.php</scriptfile>
 
@@ -53,7 +56,7 @@
 	</config>
 
 	<updateservers>
-		<server type="extension" priority="1" name="PLG_SEARCH_JTCSV2HTML">https://raw.githubusercontent.com/JoomTools/updateserver/master/plg_search_jtcsv2html.xml</server>
+		<server type="extension" priority="1" name="PLG_SEARCH_JTCSV2HTML">https://raw.githubusercontent.com/JoomTools/plg_search_jtcsv2html/master/update.xmll</server>
 	</updateservers>
 
 </extension>
