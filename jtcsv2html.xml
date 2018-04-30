@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension version="2.5" type="plugin" group="search" method="upgrade">
+<extension version="3" type="plugin" group="search" method="upgrade">
 	<name>PLG_SEARCH_JTCSV2HTML</name>
+	<creationDate>2017-01-22</creationDate>
 	<author>Guido De Gobbis</author>
-	<creationDate>2014</creationDate>
-	<version>2.5</version>
-	<copyright>(C) JoomTools.de. All rights reserved.</copyright>
-	<license>GNU General Public License version 3 or later.</license>
-	<authorEmail>guido.de.gobbis@joomtools.de</authorEmail>
+	<authorEmail>support@joomtools.de</authorEmail>
+	<authorUrl>www.joomtools.de</authorUrl>
+	<copyright>Copyright (C) 2016 JoomTools.de. All rights reserved.</copyright>
+	<license>GPL v3</license>
+	<version>3.0.0</version>
 	<description>PLG_SEARCH_JTCSV2HTML_XML_DESCRIPTION</description>
 	
 	<files>
 		<filename plugin="jtcsv2html">jtcsv2html.php</filename>
-		<folder>language</folder>
+<!--		<folder>language</folder> -->
 	</files>
+
+	<scriptfile>jtcsv2html.scriptfile.php</scriptfile>
 
 	<config>
 		<fields name="params">
@@ -26,7 +29,7 @@
 				/>
 
 				<field name="search_content" type="radio"
-					class="btn-group btn-group-yesno"
+					class="btn-group"
 					default="1"
 					description="PLG_SEARCH_JTCSV2HTML_FIELD_CONTENT_DESC"
 					label="PLG_SEARCH_JTCSV2HTML_FIELD_CONTENT_LABEL"
@@ -36,7 +39,7 @@
 				</field>
 
 				<field name="search_archived" type="radio"
-					class="btn-group btn-group-yesno"
+					class="btn-group"
 					default="0"
 					description="PLG_SEARCH_JTCSV2HTML_FIELD_ARCHIVED_DESC"
 					label="PLG_SEARCH_JTCSV2HTML_FIELD_ARCHIVED_LABEL"
@@ -44,17 +47,13 @@
 					<option value="1">JON</option>
 					<option value="0">JOFF</option>
 				</field>
-				<field name="debug"
-				       type="radio"
-				       class="btn-group btn-group-yesno"
-				       default="0"
-				       label="PLG_SEARCH_JTCSV2HTML_FIELD_DEBUG"
-				       description="PLG_SEARCH_JTCSV2HTML_FIELD_DEBUG_DESC">
-					<option value="1">JON</option>
-					<option value="0">JOFF</option>
-				</field>
 			</fieldset>
 
 		</fields>
 	</config>
+
+	<updateservers>
+		<server type="extension" priority="1" name="PLG_SEARCH_JTCSV2HTML">https://raw.githubusercontent.com/JoomTools/updateserver/master/plg_search_jtcsv2html.xml</server>
+	</updateservers>
+
 </extension>

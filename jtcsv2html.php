@@ -1,11 +1,11 @@
 <?php
 /**
  * @Copyright  JoomTools
- * @package    JT - Csv2Html - Plugin for Joomla! 2.5.x - 3.x
+ * @package    JT - Csv2Html - Plugin for Joomla! 3.x
  * @author     Guido De Gobbis
  * @link       http://www.joomtools.de
  *
- * @license    GNU/GPL <http://www.gnu.org/licenses/>
+ * @license    GNU/GPL v3 <http://www.gnu.org/licenses/>
  *             This program is free software: you can redistribute it and/or modify
  *             it under the terms of the GNU General Public License as published by
  *             the Free Software Foundation, either version 3 of the License, or
@@ -19,8 +19,6 @@
 
 defined('_JEXEC') or die;
 
-require_once JPATH_SITE . '/components/com_content/router.php';
-
 /**
  * Content search plugin.
  *
@@ -30,44 +28,23 @@ require_once JPATH_SITE . '/components/com_content/router.php';
  */
 class PlgSearchJtcsv2html extends JPlugin
 {
-	private $FB = false;
-
-	public function __construct(&$subject, $params)
-	{
-		if(!JFactory::getApplication()->isSite()) return array();
-
-		parent::__construct($subject, $params);
-
-		$this->loadLanguage('plg_search_jtcsv2html');
-
-		if(defined('JFIREPHP') && $this->params->get('debug', 0)) {
-			$this->FB = FirePHP::getInstance(TRUE);
-		} else {
-			$this->FB = FALSE;
-		}
-	}
 	/**
-	 * Determine areas searchable by this plugin.
+	 * Affects constructor behavior. If true, language files will be loaded automatically.
 	 *
-	 * @return  array  An array of search areas.
-	 *
-	 * @since   1.6
+	 * @var    boolean
+	 * @since  3.1
 	 */
-	public function onContentSearchAreas()
-	{
-		static $areas = array('content' => 'JGLOBAL_ARTICLES');
-		return $areas;
-	}
+	protected $autoloadLanguage = true;
 
 	/**
 	 * Search content (articles).
 	 * The SQL must return the following fields that are used in a common display
 	 * routine: href, title, section, created, text, browsernav.
 	 *
-	 * @param   string  $text      Target search string.
-	 * @param   string  $phrase    Matching option (possible values: exact|any|all).  Default is "any".
-	 * @param   string  $ordering  Ordering option (possible values: newest|oldest|popular|alpha|category).  Default is "newest".
-	 * @param   mixed   $areas     An array if the search it to be restricted to areas or null to search all areas.
+	 * @param   string $text     Target search string.
+	 * @param   string $phrase   Matching option (possible values: exact|any|all).  Default is "any".
+	 * @param   string $ordering Ordering option (possible values: newest|oldest|popular|alpha|category).  Default is "newest".
+	 * @param   mixed  $areas    An array if the search it to be restricted to areas or null to search all areas.
 	 *
 	 * @return  array  Search results.
 	 *
@@ -75,82 +52,80 @@ class PlgSearchJtcsv2html extends JPlugin
 	 */
 	public function onContentSearch($text, $phrase = '', $ordering = '', $areas = null)
 	{
-		$FB = $this->FB;
-		if($FB) $FB->group(__FUNCTION__ . '()', array('Collapsed' => TRUE, 'Color' => '#6699CC'));
-		if($FB) $FB->log($text, '$text');
-		if($FB) $FB->log($phrase, '$phrase');
-		if($FB) $FB->log($ordering, '$ordering');
-		if($FB) $FB->log($areas, '$areas');
-
-		$db = JFactory::getDbo();
-		$app = JFactory::getApplication();
-		$user = JFactory::getUser();
+		$db     = JFactory::getDbo();
+		$app    = JFactory::getApplication();
+		$user   = JFactory::getUser();
 		$groups = implode(',', $user->getAuthorisedViewLevels());
-		$tag = JFactory::getLanguage()->getTag();
-		$list1 = $list2 = $list3 = array();
+		$tag    = JFactory::getLanguage()->getTag();
+		$list1  = $list2 = $list3 = array();
 
-		require_once JPATH_SITE . '/components/com_content/helpers/route.php';
-		require_once JPATH_ADMINISTRATOR . '/components/com_search/helpers/search.php';
+		JLoader::register('ContentHelperRoute', JPATH_SITE . '/components/com_content/helpers/route.php');
+		JLoader::register('SearchHelper', JPATH_ADMINISTRATOR . '/components/com_search/helpers/search.php');
 
 		$searchText = $text;
 
-		if (is_array($areas)) {
-			if (!array_intersect($areas, array_keys($this->onContentSearchAreas()))) {
+		if (is_array($areas))
+		{
+			if (!array_intersect($areas, array_keys($this->onContentSearchAreas())))
+			{
 				return array();
 			}
 		}
 
-		$sContent = $this->params->get('search_content', 1);
+		$sContent  = $this->params->get('search_content', 1);
 		$sArchived = $this->params->get('search_archived', 1);
-		$limit = $this->params->def('search_limit', 50);
+		$limit     = $this->params->def('search_limit', 50);
 
 		$nullDate = $db->getNullDate();
-		$date = JFactory::getDate();
-		$now = $date->toSql();
+		$date     = JFactory::getDate();
+		$now      = $date->toSql();
 
 		$text = trim($text);
 
-		if ($text == '') return array();
+		if ($text == '')
+		{
+			return array();
+		}
 
 		switch ($phrase)
 		{
 			case 'exact':
-				$text = $db->quote('%' . $db->escape($text, true) . '%', false);
-				$wheres2 = $myText2 = array();
+				$text      = $db->quote('%' . $db->escape($text, true) . '%', false);
+				$wheres2   = $myText2 = array();
 				$wheres2[] = 'a.title LIKE ' . $text;
 				$wheres2[] = 'a.introtext LIKE ' . $text;
 				$wheres2[] = 'a.fulltext LIKE ' . $text;
 				$wheres2[] = 'a.metakey LIKE ' . $text;
 				$wheres2[] = 'a.metadesc LIKE ' . $text;
-				$myText2 = $wheres2;
+				$myText2   = $wheres2;
 				$myText2[] = 'f.datas LIKE ' . $text;
-				$where = '(' . implode(') OR (', $wheres2) . ')';
-				$where2 = '(' . implode(') OR (', $myText2) . ')';
+				$where     = '(' . implode(') OR (', $wheres2) . ')';
+				$where2    = '(' . implode(') OR (', $myText2) . ')';
 				break;
 
 			case 'all':
 			case 'any':
 			default:
-				$words = explode(' ', $text);
+				$words  = explode(' ', $text);
 				$wheres = $myText = array();
 
 				foreach ($words as $word)
 				{
-					$word = $db->quote('%' . $db->escape($word, true) . '%', false);
-					$wheres2 = $myText2 = array();
-					$wheres2[] = 'a.title LIKE ' . $word;
-					$wheres2[] = 'a.introtext LIKE ' . $word;
-					$wheres2[] = 'a.fulltext LIKE ' . $word;
-					$wheres2[] = 'a.metakey LIKE ' . $word;
-					$wheres2[] = 'a.metadesc LIKE ' . $word;
-					$myText2 = $wheres2;
-					$myText2[] = 'f.datas LIKE ' . $word;
-					$wheres[] = implode(' OR ', $wheres2);
-					$myText[] = implode(' OR ', $myText2);
+					$word      = $db->quote('%' . $db->escape($word, true) . '%', false);
+					$wheres2   = $myText2 = array();
+					$wheres2[] = 'LOWER(a.title) LIKE LOWER(' . $word . ')';
+					$wheres2[] = 'LOWER(a.introtext) LIKE LOWER(' . $word . ')';
+					$wheres2[] = 'LOWER(a.fulltext) LIKE LOWER(' . $word . ')';
+					$wheres2[] = 'LOWER(a.metakey) LIKE LOWER(' . $word . ')';
+					$wheres2[] = 'LOWER(a.metadesc) LIKE LOWER(' . $word . ')';
+					$myText2   = $wheres2;
+					$myText2[] = 'LOWER(f.datas) LIKE LOWER(' . $word . ')';
+					$wheres[]  = implode(' OR ', $wheres2);
+					$myText[]  = implode(' OR ', $myText2);
 
 				}
 
-				$where = '(' . implode(($phrase == 'all' ? ') AND (' : ') OR ('), $wheres) . ')';
+				$where  = '(' . implode(($phrase == 'all' ? ') AND (' : ') OR ('), $wheres) . ')';
 				$where2 = '(' . implode(($phrase == 'all' ? ') AND (' : ') OR ('), $myText) . ')';
 				break;
 		}
@@ -179,14 +154,14 @@ class PlgSearchJtcsv2html extends JPlugin
 				break;
 		}
 
-		$rows = array();
+		$rows  = array();
 		$query = $db->getQuery(true);
 
 		// SQLSRV changes.
 		$case_when = ' CASE WHEN ';
 		$case_when .= $query->charLength('a.alias', '!=', '0');
 		$case_when .= ' THEN ';
-		$a_id = $query->castAsChar('a.id');
+		$a_id      = $query->castAsChar('a.id');
 		$case_when .= $query->concatenate(array($a_id, 'a.alias'), ':');
 		$case_when .= ' ELSE ';
 		$case_when .= $a_id . ' END as slug';
@@ -194,7 +169,7 @@ class PlgSearchJtcsv2html extends JPlugin
 		$case_when1 = ' CASE WHEN ';
 		$case_when1 .= $query->charLength('c.alias', '!=', '0');
 		$case_when1 .= ' THEN ';
-		$c_id = $query->castAsChar('c.id');
+		$c_id       = $query->castAsChar('c.id');
 		$case_when1 .= $query->concatenate(array($c_id, 'c.alias'), ':');
 		$case_when1 .= ' ELSE ';
 		$case_when1 .= $c_id . ' END as catslug';
@@ -204,43 +179,51 @@ class PlgSearchJtcsv2html extends JPlugin
 		{
 			$query->clear();
 
-			$query->select('a.id AS id, a.title AS title, a.metadesc, a.metakey, a.created AS created')
-			      ->select($query->concatenate(array('a.introtext', 'a.fulltext')) . ' AS text')
-			      ->select('c.title AS section, ' . $case_when . ',' . $case_when1 . ', ' . '\'2\' AS browsernav')
-
-			      ->from('#__content AS a')
-			      ->join('INNER', '#__categories AS c ON c.id=a.catid')
-			      ->where('(' . $where . ') AND a.state=1 AND c.published = 1 '
-			              . 'AND a.access IN (' . $groups . ') '
-					          . 'AND c.access IN (' . $groups . ') '
-					          . 'AND (a.publish_up = ' . $db->quote($nullDate)
-			              . ' OR a.publish_up <= ' . $db->quote($now) . ') '
-					          . 'AND (a.publish_down = ' . $db->quote($nullDate)
-			              . ' OR a.publish_down >= ' . $db->quote($now) . ')'
-			      )
-			      ->group('a.id, a.title, a.metadesc, a.metakey, a.created, a.introtext, a.fulltext, c.title, a.alias, c.alias, c.id')
-			      ->order($order);
+			$query->select('a.id AS id, a.title AS title, a.metadesc, a.metakey, a.created AS created, a.language, a.catid')
+				->select($query->concatenate(array('a.introtext', 'a.fulltext')) . ' AS text')
+				->select('c.title AS section, ' . $case_when . ',' . $case_when1 . ', ' . '\'2\' AS browsernav')
+				->from('#__content AS a')
+				->join('INNER', '#__categories AS c ON c.id=a.catid')
+				->where('(' . $where . ') AND a.state=1 AND c.published = 1 '
+					. 'AND a.access IN (' . $groups . ') '
+					. 'AND c.access IN (' . $groups . ') '
+					. 'AND (a.publish_up = ' . $db->quote($nullDate)
+					. ' OR a.publish_up <= ' . $db->quote($now) . ') '
+					. 'AND (a.publish_down = ' . $db->quote($nullDate)
+					. ' OR a.publish_down >= ' . $db->quote($now) . ')'
+				)
+				->group('a.id, a.title, a.metadesc, a.metakey, a.created, a.language, a.catid, a.introtext, a.fulltext, c.title, a.alias, c.alias, c.id')
+				->order($order);
 
 			// Filter by language.
 			if ($app->isSite() && JLanguageMultilang::isEnabled())
 			{
 				$query->where('a.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')')
-				      ->where('c.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')');
+					->where('c.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')');
 			}
 
 			$db->setQuery($query, 0, $limit);
-			if($FB) $FB->log((string)$query, '$query1');
 
-			$list = $db->loadObjectList();
+			try
+			{
+				$list = $db->loadObjectList();
+			}
+			catch (RuntimeException $e)
+			{
+				$list = array();
+				JFactory::getApplication()->enqueueMessage(JText::_('JERROR_AN_ERROR_HAS_OCCURRED'), 'error');
+			}
+
 			$limit -= count($list);
 
 			if (isset($list))
 			{
 				foreach ($list as $key => $item)
 				{
-					$list[$key]->href = ContentHelperRoute::getArticleRoute($item->slug, $item->catslug);
-					$list1['id:'.$item->id] = $item;
+					$list[$key]->href         = ContentHelperRoute::getArticleRoute($item->slug, $item->catslug);
+					$list1['id:' . $item->id] = $item;
 				}
+
 				unset($list);
 			}
 
@@ -248,38 +231,46 @@ class PlgSearchJtcsv2html extends JPlugin
 			$query->clear();
 
 			$query->select('a.id AS id, a.title AS title, a.metadesc, a.metakey, a.created AS created')
-			      ->select($query->concatenate(array('a.introtext', 'a.fulltext')) . ' AS text')
-			      ->select('c.title AS section, ' . $case_when . ',' . $case_when1 . ', ' . '\'2\' AS browsernav')
-					->from('#__jtcsv2html AS f, #__content AS a')
-					->join('INNER', '#__categories AS c ON c.id=a.catid')
-					->where('(' . $where2 . ') AND f.cid=a.id '
-					        . 'AND a.state=1 AND c.published = 1 AND a.access IN (' . $groups . ') '
-					        . 'AND c.access IN (' . $groups . ') '
-					        . 'AND (a.publish_up = ' . $db->quote($nullDate)
-					        . ' OR a.publish_up <= ' . $db->quote($now) . ') '
-					        . 'AND (a.publish_down = ' . $db->quote($nullDate)
-					        . ' OR a.publish_down >= ' . $db->quote($now) . ')'
-			      )
-			      ->group('a.id, a.title, a.metadesc, a.metakey, a.created, a.introtext, a.fulltext, c.title, a.alias, c.alias, c.id')
-			      ->order($order);
+				->select($query->concatenate(array('a.introtext', 'a.fulltext')) . ' AS text')
+				->select('c.title AS section, ' . $case_when . ',' . $case_when1 . ', ' . '\'2\' AS browsernav')
+				->from('#__jtcsv2html AS f, #__content AS a')
+				->join('INNER', '#__categories AS c ON c.id=a.catid')
+				->where('(' . $where2 . ') AND f.cid=a.id '
+					. 'AND a.state=1 AND c.published = 1 AND a.access IN (' . $groups . ') '
+					. 'AND c.access IN (' . $groups . ') '
+					. 'AND (a.publish_up = ' . $db->quote($nullDate)
+					. ' OR a.publish_up <= ' . $db->quote($now) . ') '
+					. 'AND (a.publish_down = ' . $db->quote($nullDate)
+					. ' OR a.publish_down >= ' . $db->quote($now) . ')'
+				)
+				->group('a.id, a.title, a.metadesc, a.metakey, a.created, a.introtext, a.fulltext, c.title, a.alias, c.alias, c.id')
+				->order($order);
 
 			// Filter by language.
 			if ($app->isSite() && JLanguageMultilang::isEnabled())
 			{
 				$query->where('a.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')')
-				      ->where('c.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')');
+					->where('c.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')');
 			}
 
 			$db->setQuery($query, 0, $limit);
-			if($FB) $FB->log((string)$query, '$query2');
-			$list = $db->loadObjectList();
+
+			try
+			{
+				$list = $db->loadObjectList();
+			}
+			catch (RuntimeException $e)
+			{
+				$list = array();
+				JFactory::getApplication()->enqueueMessage(JText::_('JERROR_AN_ERROR_HAS_OCCURRED'), 'error');
+			}
 
 			if (isset($list))
 			{
 				foreach ($list as $key => $item)
 				{
-					$list[$key]->href = ContentHelperRoute::getArticleRoute($item->slug, $item->catslug);
-					$list2['id:'.$item->id] = $item;
+					$list[$key]->href         = ContentHelperRoute::getArticleRoute($item->slug, $item->catslug);
+					$list2['id:' . $item->id] = $item;
 				}
 				unset($list);
 			}
@@ -291,38 +282,45 @@ class PlgSearchJtcsv2html extends JPlugin
 			$query->clear();
 
 			$query->select('a.id AS id, a.title AS title, a.metadesc, a.metakey, a.created AS created, '
-					. $query->concatenate(array("a.introtext", "a.fulltext")) . ' AS text,'
-					. $case_when . ',' . $case_when1 . ', '
-					. 'c.title AS section, \'2\' AS browsernav'
+				. $query->concatenate(array("a.introtext", "a.fulltext")) . ' AS text,'
+				. $case_when . ',' . $case_when1 . ', '
+				. 'c.title AS section, \'2\' AS browsernav'
 			);
 
 			// .'CONCAT_WS("/", c.title) AS section, \'2\' AS browsernav' );
 			$query->from('#__content AS a')
-			      ->join('INNER', '#__categories AS c ON c.id=a.catid AND c.access IN (' . $groups . ')')
-			      ->where('(' . $where . ') AND a.state=2 AND c.published=1 '
-			              . 'AND a.access IN (' . $groups . ') AND c.access IN (' . $groups . ') '
-					          . 'AND (a.publish_up = ' . $db->quote($nullDate)
-			              . ' OR a.publish_up <= ' . $db->quote($now) . ') '
-					          . 'AND (a.publish_down = ' . $db->quote($nullDate)
-			              . ' OR a.publish_down >= ' . $db->quote($now) . ')'
-			      )
-			      ->order($order);
+				->join('INNER', '#__categories AS c ON c.id=a.catid AND c.access IN (' . $groups . ')')
+				->where(
+					'(' . $where . ') AND a.state = 2 AND c.published = 1 AND a.access IN (' . $groups
+					. ') AND c.access IN (' . $groups . ') '
+					. 'AND (a.publish_up = ' . $db->quote($nullDate) . ' OR a.publish_up <= ' . $db->quote($now) . ') '
+					. 'AND (a.publish_down = ' . $db->quote($nullDate) . ' OR a.publish_down >= ' . $db->quote($now) . ')'
+				)
+				->order($order);
 
 			// Filter by language.
 			if ($app->isSite() && JLanguageMultilang::isEnabled())
 			{
 				$query->where('a.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')')
-				      ->where('c.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')');
+					->where('c.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')');
 			}
 
 			$db->setQuery($query, 0, $limit);
-			if($FB) $FB->log((string)$query, '$query3');
 
-			$list = $db->loadObjectList();
+			try
+			{
+				$list = $db->loadObjectList();
+			}
+			catch (RuntimeException $e)
+			{
+				$list = array();
+				JFactory::getApplication()->enqueueMessage(JText::_('JERROR_AN_ERROR_HAS_OCCURRED'), 'error');
+			}
+
 			$limit -= count($list);
 
 			// Find an itemid for archived to use if there isn't another one.
-			$item = $app->getMenu()->getItems('link', 'index.php?option=com_content&view=archive', true);
+			$item   = $app->getMenu()->getItems('link', 'index.php?option=com_content&view=archive', true);
 			$itemid = isset($item->id) ? '&Itemid=' . $item->id : '';
 
 			if (isset($list))
@@ -332,10 +330,10 @@ class PlgSearchJtcsv2html extends JPlugin
 					$date = JFactory::getDate($item->created);
 
 					$created_month = $date->format("n");
-					$created_year = $date->format("Y");
+					$created_year  = $date->format("Y");
 
-					$list[$key]->href = JRoute::_('index.php?option=com_content&view=archive&year=' . $created_year . '&month=' . $created_month . $itemid);
-					$list3['id:'.$item->id] = $item;
+					$list[$key]->href         = JRoute::_('index.php?option=com_content&view=archive&year=' . $created_year . '&month=' . $created_month . $itemid);
+					$list3['id:' . $item->id] = $item;
 				}
 				unset($list);
 			}
@@ -344,40 +342,48 @@ class PlgSearchJtcsv2html extends JPlugin
 			$query->clear();
 
 			$query->select('a.id AS id, a.title AS title, a.metadesc, a.metakey, a.created AS created, '
-					. $query->concatenate(array("a.introtext", "a.fulltext")) . ' AS text,'
-					. $case_when . ',' . $case_when1 . ', '
-					. 'c.title AS section, \'2\' AS browsernav'
+				. $query->concatenate(array("a.introtext", "a.fulltext")) . ' AS text,'
+				. $case_when . ',' . $case_when1 . ', '
+				. 'c.title AS section, \'2\' AS browsernav'
 			);
 
 			// .'CONCAT_WS("/", c.title) AS section, \'2\' AS browsernav' );
 			$query->from('#__jtcsv2html AS f, #__content AS a')
-			      ->join('INNER', '#__categories AS c ON c.id=a.catid AND c.access IN (' . $groups . ')')
-					->where('(' . $where2 . ') AND f.cid=a.id '
-					        . 'AND c.id=a.catid AND a.state=2 AND c.published=1 '
-					        . 'AND a.access IN (' . $groups . ') '
-					        . 'AND c.access IN (' . $groups . ') '
-					        . 'AND (a.publish_up = ' . $db->quote($nullDate)
-					        . ' OR a.publish_up <= ' . $db->quote($now) . ') '
-					        . 'AND (a.publish_down = ' . $db->quote($nullDate)
-					        . ' OR a.publish_down >= ' . $db->quote($now) . ')'
-					)
-			      ->order($order);
+				->join('INNER', '#__categories AS c ON c.id=a.catid AND c.access IN (' . $groups . ')')
+				->where('(' . $where2 . ') AND f.cid=a.id '
+					. 'AND c.id=a.catid AND a.state=2 AND c.published=1 '
+					. 'AND a.access IN (' . $groups . ') '
+					. 'AND c.access IN (' . $groups . ') '
+					. 'AND (a.publish_up = ' . $db->quote($nullDate)
+					. ' OR a.publish_up <= ' . $db->quote($now) . ') '
+					. 'AND (a.publish_down = ' . $db->quote($nullDate)
+					. ' OR a.publish_down >= ' . $db->quote($now) . ')'
+				)
+				->order($order);
 
 			// Filter by language.
 			if ($app->isSite() && JLanguageMultilang::isEnabled())
 			{
 				$query->where('a.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')')
-				      ->where('c.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')');
+					->where('c.language in (' . $db->quote($tag) . ',' . $db->quote('*') . ')');
 			}
 
 			$db->setQuery($query, 0, $limit);
-			if($FB) $FB->log((string)$query, '$query4');
 
-			$list = $db->loadObjectList();
+			try
+			{
+				$list = $db->loadObjectList();
+			}
+			catch (RuntimeException $e)
+			{
+				$list = array();
+				JFactory::getApplication()->enqueueMessage(JText::_('JERROR_AN_ERROR_HAS_OCCURRED'), 'error');
+			}
+
 			$limit -= count($list);
 
 			// Find an itemid for archived to use if there isn't another one.
-			$item = $app->getMenu()->getItems('link', 'index.php?option=com_content&view=archive', true);
+			$item   = $app->getMenu()->getItems('link', 'index.php?option=com_content&view=archive', true);
 			$itemid = isset($item->id) ? '&Itemid=' . $item->id : '';
 
 			if (isset($list))
@@ -387,25 +393,16 @@ class PlgSearchJtcsv2html extends JPlugin
 					$date = JFactory::getDate($item->created);
 
 					$created_month = $date->format("n");
-					$created_year = $date->format("Y");
+					$created_year  = $date->format("Y");
 
-					$list[$key]->href = JRoute::_('index.php?option=com_content&view=archive&year=' . $created_year . '&month=' . $created_month . $itemid);
-					$list4['id:'.$item->id] = $item;
+					$list[$key]->href         = JRoute::_('index.php?option=com_content&view=archive&year=' . $created_year . '&month=' . $created_month . $itemid);
+					$list4['id:' . $item->id] = $item;
 				}
 				unset($list);
 			}
 		}
 
-		if($FB) $FB->log($list1, '$list1');
-		if($FB) $FB->log($list2, '$list2');
-		if($FB) $FB->log($list3, '$list3');
-		if($FB) $FB->log($list4, '$list4');
-
-		$rows[] = array_merge($list1, $list2, $list3, $list3);
-
-		if($FB) $FB->log($rows, '$rows');
-
-
+		$rows[]  = array_merge($list1, $list2, $list3, $list3);
 		$results = array();
 
 		if (count($rows))
@@ -416,12 +413,9 @@ class PlgSearchJtcsv2html extends JPlugin
 
 				foreach ($row as $article)
 				{
-					if($FB) $FB->log($article, 'csv2html - $article');
 					JPluginHelper::importPlugin('content', 'jtcsv2html');
-					$dispatcher =& JEventDispatcher::getInstance();
-					$results2 = $dispatcher->trigger('onContentPrepare', array ('com_content.search', &$article, &$this->params, $limit));
-					if($FB) $FB->log($results2, 'csv2html - $results2');
-					if($FB) $FB->log($article, 'csv2html - $article');
+					$dispatcher = JEventDispatcher::getInstance();
+					$results2   = $dispatcher->trigger('onContentPrepare', array('com_content.search', &$article, &$this->params, $limit));
 
 					if (SearchHelper::checkNoHTML($article, $searchText, array('text', 'title', 'metadesc', 'metakey')))
 					{
@@ -433,8 +427,22 @@ class PlgSearchJtcsv2html extends JPlugin
 			}
 		}
 
-		if($FB) $FB->groupEnd();
-
 		return $results;
+	}
+
+	/**
+	 * Determine areas searchable by this plugin.
+	 *
+	 * @return  array  An array of search areas.
+	 *
+	 * @since   1.6
+	 */
+	public function onContentSearchAreas()
+	{
+		static $areas = array(
+			'content' => 'JGLOBAL_ARTICLES'
+		);
+
+		return $areas;
 	}
 }
