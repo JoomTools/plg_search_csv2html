@@ -56,7 +56,7 @@
 	</config>
 
 	<updateservers>
-		<server type="extension" priority="1" name="PLG_SEARCH_JTCSV2HTML">https://raw.githubusercontent.com/JoomTools/plg_search_jtcsv2html/master/update.xmll</server>
+		<server type="extension" priority="1" name="PLG_SEARCH_JTCSV2HTML">https://raw.githubusercontent.com/joomtools/plg_search_jtcsv2html/master/update.xml</server>
 	</updateservers>
 
 </extension>
